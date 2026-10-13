@@ -261,8 +261,25 @@ try {
   }
   process.exitCode = 1;
 } finally {
-  await context?.close();
-  await browser?.close();
-  await clientBrowser?.close();
-  stack?.kill("SIGTERM");
+  // Close our local noVNC client first, then only our synthetic context and
+  // Playwright connection. Connected Browser.close() disconnects; it does not
+  // stop launchServer or close contexts belonging to other connections.
+  for (const [label, resource] of [
+    ["local client browser", clientBrowser],
+    ["synthetic context", context],
+    ["remote Playwright connection", browser],
+  ]) {
+    if (!resource) continue;
+    console.log("CLEANUP start:", label);
+    try {
+      await deadline(resource.close(), "cleanup " + label);
+      console.log("CLEANUP done:", label);
+    } catch (error) {
+      console.warn("CLEANUP warning:", label, error.message);
+    }
+  }
+  stack?.kill("SIGTERM"); // Only --isolated created this disposable stack.
+  // A timed-out Playwright transport can retain Node handles. Exit only this
+  // command-line runner after bounded cleanup, never a remote browser server.
+  process.exit(process.exitCode || 0);
 }
