@@ -189,7 +189,7 @@ class DockerBrowserNodeProvisionerTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(runtime.container_name, "browser-session-session-1")
             self.assertEqual(runtime.network_name, "auto-browser_default")
             self.assertEqual(runtime.ws_endpoint, "ws://browser-session-session-1:9223/playwright")
-            self.assertEqual(runtime.takeover_url, "http://127.0.0.1:16080/vnc.html?autoconnect=true&resize=scale")
+            self.assertEqual(runtime.takeover_url, "http://127.0.0.1:16080/vnc.html?autoconnect=true&resize=remote")
             self.assertTrue(runtime.ws_endpoint_file.exists())
 
             await provisioner.release(runtime)

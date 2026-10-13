@@ -98,7 +98,7 @@ services:
       CONTROLLER_ALLOWED_HOSTS: ${CONTROLLER_ALLOWED_HOSTS:-localhost,127.0.0.1,::1,testserver}
       LOG_LEVEL: ${LOG_LEVEL:-INFO}
       BROWSER_WS_ENDPOINT_FILE: /data/browser-profile/browser-ws-endpoint.txt
-      TAKEOVER_URL: ${TAKEOVER_URL:-http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale}
+      TAKEOVER_URL: ${TAKEOVER_URL:-http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=remote}
       REMOTE_ACCESS_INFO_PATH: ${REMOTE_ACCESS_INFO_PATH:-/data/tunnels/reverse-ssh.json}
       REMOTE_ACCESS_STALE_AFTER_SECONDS: ${REMOTE_ACCESS_STALE_AFTER_SECONDS:-45}
       COMPLIANCE_TEMPLATE: ${COMPLIANCE_TEMPLATE:-}

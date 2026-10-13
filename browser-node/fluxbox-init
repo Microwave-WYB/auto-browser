@@ -1,0 +1,3 @@
+session.configVersion: 13
+session.screen0.toolbar.visible: false
+session.appsFile: /etc/auto-browser/fluxbox-apps

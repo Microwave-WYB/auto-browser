@@ -84,7 +84,7 @@ import sys
 payload = json.loads(sys.argv[1])
 assert payload["active"] is True, payload
 assert payload["status"] == "active", payload
-assert payload["takeover_url"] == "http://test-bastion:16080/vnc.html?autoconnect=true&resize=scale", payload
+assert payload["takeover_url"] == "http://test-bastion:16080/vnc.html?autoconnect=true&resize=remote", payload
 assert payload["api_url"] == "http://test-bastion:18000", payload
 print("remote-access endpoint ok")
 PY
@@ -105,7 +105,7 @@ import sys
 payload = json.loads(sys.argv[1])
 assert payload["session"]["remote_access"]["active"] is True, payload
 assert payload["remote_access"]["status"] == "active", payload
-assert payload["takeover_url"] == "http://test-bastion:16080/vnc.html?autoconnect=true&resize=scale", payload
+assert payload["takeover_url"] == "http://test-bastion:16080/vnc.html?autoconnect=true&resize=remote", payload
 assert payload["url"] == "https://example.com/", payload
 print("observe through forwarded API ok")
 PY

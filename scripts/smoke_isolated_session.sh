@@ -45,7 +45,7 @@ assert payload["isolation"]["shared_browser_process"] is False, payload
 assert payload["isolation"]["shared_takeover_surface"] is False, payload
 assert payload["remote_access"]["status"] == "local_only", payload
 runtime = payload["isolation"]["runtime"]
-expected_takeover = f"http://127.0.0.1:{runtime['novnc_port']}/vnc.html?autoconnect=true&resize=scale"
+expected_takeover = f"http://127.0.0.1:{runtime['novnc_port']}/vnc.html?autoconnect=true&resize=remote"
 assert payload["takeover_url"] == expected_takeover, payload
 print(payload["id"], runtime["container_name"], runtime["novnc_port"])
 PY
@@ -68,7 +68,7 @@ novnc_port = int(sys.argv[3])
 assert payload["session"]["isolation"]["mode"] == "docker_ephemeral", payload
 assert payload["session"]["isolation"]["runtime"]["container_name"] == container_name, payload
 assert payload["remote_access"]["status"] == "local_only", payload
-assert payload["takeover_url"] == f"http://127.0.0.1:{novnc_port}/vnc.html?autoconnect=true&resize=scale", payload
+assert payload["takeover_url"] == f"http://127.0.0.1:{novnc_port}/vnc.html?autoconnect=true&resize=remote", payload
 assert payload["url"] == "https://example.com/", payload
 print("isolated observe ok")
 PY
@@ -81,7 +81,7 @@ import sys
 payload = json.loads(sys.argv[1])
 novnc_port = int(sys.argv[2])
 assert payload["status"] == "local_only", payload
-assert payload["takeover_url"] == f"http://127.0.0.1:{novnc_port}/vnc.html?autoconnect=true&resize=scale", payload
+assert payload["takeover_url"] == f"http://127.0.0.1:{novnc_port}/vnc.html?autoconnect=true&resize=remote", payload
 print("isolated remote-access endpoint ok")
 PY
 

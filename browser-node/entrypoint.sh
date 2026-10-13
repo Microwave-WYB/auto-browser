@@ -41,39 +41,43 @@ if [[ "$(id -u)" -eq 0 ]] && id "$BROWSER_USER" >/dev/null 2>&1; then
   chmod 1777 /tmp/.X11-unix
 fi
 
-# x11vnc serves the raw display, and noVNC fronts it. Without a password either
+# TigerVNC serves a resize-capable X display, and noVNC fronts it. Without a password either
 # port is full control of a browser holding stored logins, which is only safe
 # while both stay bound to loopback. VNC_PASSWORD adds VNC authentication for
 # deployments that publish them more widely (noVNC prompts for it). The VNC
 # protocol uses only the first 8 characters. It goes through a 0600 file, not
 # argv, and is unset so Chromium and the other processes never inherit it.
-VNC_AUTH_ARGS=(-nopw)
+VNC_AUTH_ARGS=(-SecurityTypes None)
 if [[ -n "${VNC_PASSWORD:-}" ]]; then
   VNC_PASSWORD_FILE=/tmp/runtime/vnc-password
-  (umask 077 && printf '%s\n' "$VNC_PASSWORD" >"$VNC_PASSWORD_FILE")
+  (umask 077 && printf '%s\n' "$VNC_PASSWORD" | tigervncpasswd -f >"$VNC_PASSWORD_FILE")
   if [[ "$(id -u)" -eq 0 ]] && id "$BROWSER_USER" >/dev/null 2>&1; then
     chown "$BROWSER_USER:$BROWSER_USER" "$VNC_PASSWORD_FILE"
   fi
-  VNC_AUTH_ARGS=(-passwdfile "$VNC_PASSWORD_FILE")
+  VNC_AUTH_ARGS=(-SecurityTypes VncAuth -PasswordFile "$VNC_PASSWORD_FILE")
 fi
 unset VNC_PASSWORD
 
-run_as_browser Xvfb "$DISPLAY" -screen 0 "${WIDTH}x${HEIGHT}x24" -ac +extension RANDR >/tmp/xvfb.log 2>&1 &
-# Everything below draws on or serves this display. Started in the same breath
-# as Xvfb, x11vnc could lose the race, fail to open the display and exit — and
-# takeover stayed dead while the healthcheck, which reaches noVNC's static page,
-# reported healthy. Wait for the display's socket first.
-for _ in {1..100}; do
-  [[ -S "/tmp/.X11-unix/X${DISPLAY_NUM}" ]] && break
-  sleep 0.1
-done
-if [[ ! -S "/tmp/.X11-unix/X${DISPLAY_NUM}" ]]; then
-  echo "Xvfb did not start within 10s:" >&2
-  cat /tmp/xvfb.log >&2 || true
+# X and RFB share one server, so noVNC SetDesktopSize changes the real framebuffer.
+# -displayfd signals X readiness without racing the window manager or Chromium.
+X_READY_FIFO=/tmp/runtime/x-ready
+rm -f "$X_READY_FIFO"
+mkfifo -m 600 "$X_READY_FIFO"
+if [[ "$(id -u)" -eq 0 ]] && id "$BROWSER_USER" >/dev/null 2>&1; then
+  chown "$BROWSER_USER:$BROWSER_USER" "$X_READY_FIFO"
+fi
+exec 3<>"$X_READY_FIFO"
+run_as_browser Xtigervnc "$DISPLAY" -geometry "${WIDTH}x${HEIGHT}" -depth 24 \
+  -rfbport 5900 -localhost no -AlwaysShared -AcceptSetDesktopSize \
+  -nolisten tcp -ac -displayfd 3 "${VNC_AUTH_ARGS[@]}" >/tmp/vnc.log 2>&1 &
+if ! read -r -t 10 X_READY_DISPLAY <&3; then
+  echo "TigerVNC did not start within 10s:" >&2
+  cat /tmp/vnc.log >&2 || true
   exit 1
 fi
-run_as_browser fluxbox >/tmp/fluxbox.log 2>&1 &
-run_as_browser x11vnc -display "$DISPLAY" -forever -shared -rfbport 5900 "${VNC_AUTH_ARGS[@]}" -xkb >/tmp/x11vnc.log 2>&1 &
+exec 3>&-
+rm -f "$X_READY_FIFO"
+run_as_browser fluxbox -rc /etc/auto-browser/fluxbox-init >/tmp/fluxbox.log 2>&1 &
 # websockify serves noVNC directly, rather than through its wrapper script, so it can take an
 # auth plugin. Chromium shares this network namespace, so without an Origin
 # check any page it loads could open ws://127.0.0.1:6080 and read and drive the

@@ -211,7 +211,7 @@ if [[ "$VNC_PORT" != "$REQUESTED_VNC_PORT" ]]; then
   echo "Using VNC_PORT=$VNC_PORT because $REQUESTED_VNC_PORT is busy."
 fi
 
-TAKEOVER_URL="${TAKEOVER_URL:-http://127.0.0.1:${NOVNC_PORT}/vnc.html?autoconnect=true&resize=scale}"
+TAKEOVER_URL="${TAKEOVER_URL:-http://127.0.0.1:${NOVNC_PORT}/vnc.html?autoconnect=true&resize=remote}"
 SMOKE_URL="${SMOKE_URL:-https://example.com}"
 SMOKE_PROVIDER="${SMOKE_PROVIDER:-openai}"
 SMOKE_GOAL="${SMOKE_GOAL:-Inspect the page. If it already says Example Domain, return done with a short reason.}"

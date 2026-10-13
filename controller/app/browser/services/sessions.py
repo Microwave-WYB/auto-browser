@@ -296,10 +296,8 @@ class BrowserSessionService:
         proxy_password: str | None,
     ) -> dict[str, Any]:
         kwargs: dict[str, Any] = {
-            "viewport": {
-                "width": self.manager.settings.default_viewport_width,
-                "height": self.manager.settings.default_viewport_height,
-            },
+            # Follow the native desktop; explicit browser.set_viewport still opts into emulation.
+            "no_viewport": True,
             "accept_downloads": True,
         }
         effective_ua = user_agent or (
@@ -575,10 +573,7 @@ class BrowserSessionService:
         shadow_session_id = uuid4().hex[:12]
         artifact_dir, auth_dir, upload_dir = self.prepare_dirs(shadow_session_id)
         context_kwargs: dict[str, Any] = {
-            "viewport": {
-                "width": manager.settings.default_viewport_width,
-                "height": manager.settings.default_viewport_height,
-            },
+            "no_viewport": True,
             "accept_downloads": True,
             "storage_state": storage_state,
         }

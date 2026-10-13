@@ -34,4 +34,4 @@ services:
       REVERSE_SSH_INFO_INTERVAL_SECONDS: 5
       REVERSE_SSH_STALE_AFTER_SECONDS: 20
       REVERSE_SSH_PUBLIC_API_URL: http://test-bastion:18000
-      REVERSE_SSH_PUBLIC_TAKEOVER_URL: http://test-bastion:16080/vnc.html?autoconnect=true&resize=scale
+      REVERSE_SSH_PUBLIC_TAKEOVER_URL: http://test-bastion:16080/vnc.html?autoconnect=true&resize=remote

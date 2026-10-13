@@ -1,0 +1,6 @@
+# Keep Chrome's own tabs/toolbar, without an extra window-manager title bar.
+# Dialog windows retain normal decorations.
+[app] (role=browser) (transient=no)
+  [Deco] {NONE}
+  [Maximized] {yes}
+[end]

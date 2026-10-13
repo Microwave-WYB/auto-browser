@@ -32,7 +32,7 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("BROWSER_WS_ENDPOINT_FILE", "BROWSER_CDP_WS_ENDPOINT_FILE"),
     )
     takeover_url: str = Field(
-        "http://localhost:6080/vnc.html?autoconnect=true&resize=scale",
+        "http://localhost:6080/vnc.html?autoconnect=true&resize=remote",
         alias="TAKEOVER_URL",
     )
     remote_access_info_path: str = Field(
@@ -113,7 +113,7 @@ class Settings(BaseSettings):
     isolated_takeover_host: str = Field("127.0.0.1", alias="ISOLATED_TAKEOVER_HOST")
     isolated_takeover_scheme: str = Field("http", alias="ISOLATED_TAKEOVER_SCHEME")
     isolated_takeover_path: str = Field(
-        "/vnc.html?autoconnect=true&resize=scale",
+        "/vnc.html?autoconnect=true&resize=remote",
         alias="ISOLATED_TAKEOVER_PATH",
     )
     isolated_browser_network: str | None = Field(None, alias="ISOLATED_BROWSER_NETWORK")

@@ -17,6 +17,7 @@ const browserServer = await chromium.launchServer({
   downloadsPath: "/data/downloads",
   args: [
     `--window-size=${width},${height}`,
+    "--start-maximized",
     "--disable-dev-shm-usage",
     "--disable-gpu",
     "--disable-software-rasterizer",

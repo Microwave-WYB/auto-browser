@@ -81,7 +81,11 @@ Open:
 
 - API docs: `http://127.0.0.1:8000/docs`
 - Operator dashboard: `http://127.0.0.1:8000/dashboard`, which includes the queue of actions waiting on your approval
-- Visual takeover: `http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=scale`
+- Visual takeover: `http://127.0.0.1:6080/vnc.html?autoconnect=true&resize=remote`
+
+Takeover resizes the actual desktop to the client window (including phone portrait); tabs and
+Chrome's toolbar remain visible. Existing custom URLs with `resize=scale` keep scaling instead.
+`browser.set_viewport` intentionally opts that page into fixed viewport emulation.
 
 All published ports bind to `127.0.0.1` by default.
 

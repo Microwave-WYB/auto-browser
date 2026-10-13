@@ -104,6 +104,8 @@ class BrowserManagerCreateSessionTests(unittest.IsolatedAsyncioTestCase):
         page.on.assert_called()
         browser.new_context.assert_awaited_once()
         context_kwargs = browser.new_context.await_args.kwargs
+        self.assertTrue(context_kwargs["no_viewport"])
+        self.assertNotIn("viewport", context_kwargs)
         self.assertEqual(context_kwargs["user_agent"], "AutoBrowserTest/1.0")
         self.assertEqual(context_kwargs["proxy"]["username"], "alice")
         self.manager._persist_session.assert_awaited()
