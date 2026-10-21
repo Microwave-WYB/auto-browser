@@ -49,6 +49,34 @@ def create_auth_profiles_router(*, manager: Any, settings: Any) -> APIRouter:
         except PermissionError:
             raise HTTPException(status_code=403, detail="Not permitted") from None
 
+    @router.get("/auth-profiles/{profile_name}/sites")
+    async def auth_profile_sites(profile_name: str) -> list[dict[str, Any]]:
+        """The sites a profile holds logins for: names and counts, never a cookie."""
+        try:
+            return await manager.auth_profile_sites(profile_name)
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid request") from None
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="Not permitted") from None
+
+    @router.delete("/auth-profiles/{profile_name}/sites/{site}")
+    async def forget_auth_profile_site(profile_name: str, site: str) -> dict[str, Any]:
+        try:
+            return await manager.forget_auth_profile_site(profile_name, site)
+        except FileNotFoundError:
+            raise HTTPException(status_code=404, detail="Not found") from None
+        except ValueError:
+            raise HTTPException(status_code=400, detail="Invalid request") from None
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="Not permitted") from None
+
+    @router.delete("/sessions/{session_id}/cookies/{site}")
+    async def clear_session_site(session_id: str, site: str) -> dict[str, Any]:
+        try:
+            return await manager.clear_session_site(session_id, site)
+        except PermissionError:
+            raise HTTPException(status_code=403, detail="Not permitted") from None
+
     @router.get("/auth-profiles/{profile_name}/export")
     async def export_auth_profile(profile_name: str):
         safe_profile_name = require_safe_segment(profile_name, field="profile_name")

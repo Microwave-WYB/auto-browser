@@ -11,7 +11,7 @@ import tempfile
 from datetime import datetime
 from pathlib import Path, PurePosixPath
 from typing import TYPE_CHECKING, Any
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlsplit
 
 from ...audit import get_current_operator
 from ...session_ownership import verified_operator
@@ -298,6 +298,65 @@ class BrowserAuthProfileService:
             payload["session"] = await self.manager._session_summary(session)
             await self.manager._persist_session(session, status="active")
             return payload
+
+    @staticmethod
+    def site_of(host: str) -> str:
+        """The site a cookie domain or an origin's host belongs to: its last two labels, without www."""
+        host = host.lower().strip().strip(".")
+        if host.startswith("www."):
+            host = host[4:]
+        labels = host.split(".")
+        return ".".join(labels[-2:]) if len(labels) > 2 else host
+
+    @classmethod
+    def sites_in(cls, state: dict[str, Any]) -> list[dict[str, Any]]:
+        """The sites a storage state holds logins for: how many cookies and stored origins each, by site."""
+        found: dict[str, dict[str, Any]] = {}
+        for cookie in state.get("cookies") or []:
+            site = cls.site_of(str(cookie.get("domain") or ""))
+            if site:
+                found.setdefault(site, {"site": site, "cookies": 0, "origins": 0})["cookies"] += 1
+        for origin in state.get("origins") or []:
+            site = cls.site_of(urlsplit(str(origin.get("origin") or "")).hostname or "")
+            if site:
+                found.setdefault(site, {"site": site, "cookies": 0, "origins": 0})["origins"] += 1
+        return sorted(found.values(), key=lambda item: item["site"])
+
+    @classmethod
+    def without_site(cls, state: dict[str, Any], site: str) -> tuple[dict[str, Any], int, int]:
+        """The storage state without what `site` (and its subdomains) set; how many cookies and origins went."""
+        site = cls.site_of(site)
+        cookies = [c for c in state.get("cookies") or [] if not cls._host_matches(str(c.get("domain") or "").lstrip("."), site)]
+        origins = [o for o in state.get("origins") or [] if not cls._host_matches(urlsplit(str(o.get("origin") or "")).hostname or "", site)]
+        removed = (len(state.get("cookies") or []) - len(cookies), len(state.get("origins") or []) - len(origins))
+        return {**state, "cookies": cookies, "origins": origins}, removed[0], removed[1]
+
+    async def sites(self, profile_name: str) -> list[dict[str, Any]]:
+        """The sites the profile holds logins for (names only: never a cookie)."""
+        normalized = self.normalize_name(profile_name)
+        self.require_access(normalized, action="reading an auth profile")
+        try:
+            path = self.resolve_state_path(normalized, must_exist=True)
+        except FileNotFoundError:
+            return []
+        return self.sites_in(self.manager.auth_state.read_state(path))
+
+    async def forget_site(self, profile_name: str, site: str) -> dict[str, Any]:
+        """Take out of the profile what `site` set: the next browser opened is signed out of it."""
+        normalized = self.normalize_name(profile_name)
+        self.require_access(normalized, action="changing an auth profile")
+        path = self.resolve_state_path(normalized, must_exist=True)
+        state, cookies, origins = self.without_site(self.manager.auth_state.read_state(path), site)
+        self.manager.auth_state.write_state(state, path)
+        return {"site": self.site_of(site), "removed_cookies": cookies, "removed_origins": origins}
+
+    async def clear_session_site(self, session_id: str, site: str) -> dict[str, Any]:
+        """Sign an open browser out of `site`: its cookies for the site and its subdomains go."""
+        session = await self.manager.get_session(session_id)
+        site = self.site_of(site)
+        async with session.lock:
+            await session.context.clear_cookies(domain=re.compile(rf"(^|\.){re.escape(site)}$"))
+        return {"site": site}
 
     async def get(self, profile_name: str) -> dict[str, Any]:
         normalized = self.normalize_name(profile_name)

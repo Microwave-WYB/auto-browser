@@ -728,6 +728,15 @@ class BrowserManager:
     async def get_auth_profile(self, profile_name: str) -> dict[str, Any]:
         return await self.auth_profiles.get(profile_name)
 
+    async def auth_profile_sites(self, profile_name: str) -> list[dict[str, Any]]:
+        return await self.auth_profiles.sites(profile_name)
+
+    async def forget_auth_profile_site(self, profile_name: str, site: str) -> dict[str, Any]:
+        return await self.auth_profiles.forget_site(profile_name, site)
+
+    async def clear_session_site(self, session_id: str, site: str) -> dict[str, Any]:
+        return await self.auth_profiles.clear_session_site(session_id, site)
+
     async def list_auth_profiles(self) -> list[dict[str, Any]]:
         return await self.auth_profiles.list()
 

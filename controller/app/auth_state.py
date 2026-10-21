@@ -176,6 +176,29 @@ class AuthStateManager:
             return False
         return None
 
+    def read_state(self, path: Path) -> dict[str, Any]:
+        """A saved storage state as Playwright's dict, decrypted where it is encrypted."""
+        info = self.inspect(path)
+        if not info["exists"]:
+            raise FileNotFoundError(path.name)
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not info["encrypted"]:
+            return payload
+        if self._fernet is None:
+            raise RuntimeError("Encrypted auth state provided but AUTH_STATE_ENCRYPTION_KEY is not configured")
+        return json.loads(self._fernet.decrypt(payload["ciphertext"].encode("utf-8")))
+
+    def write_state(self, state: dict[str, Any], destination: Path) -> dict[str, Any]:
+        """Write a storage state back, encrypted as `write_storage_state` would."""
+        final_path = self.output_path(destination)
+        final_path.parent.mkdir(parents=True, exist_ok=True)
+        if self.encryption_enabled or self.require_encryption:
+            ciphertext = self._encrypt(json.dumps(state).encode("utf-8"))
+            atomic_write_text(final_path, json.dumps({"version": 1, "format": "fernet-json", "ciphertext": ciphertext}))
+        else:
+            atomic_write_text(final_path, json.dumps(state))
+        return self.inspect(final_path)
+
     def _encrypt(self, plaintext: bytes) -> str:
         if self._fernet is None:
             raise RuntimeError("Auth state encryption key is not configured")
