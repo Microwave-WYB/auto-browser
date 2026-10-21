@@ -5,6 +5,7 @@ import weakref
 from types import SimpleNamespace
 
 from app.browser.services.diagnostics import BrowserDiagnosticsService
+from app.browser.services.tabs import BrowserTabService
 
 
 class FakePage:
@@ -59,6 +60,19 @@ class ActiveTabCloseTests(unittest.TestCase):
         background.close_itself()
 
         self.assertIs(session.page, active)
+
+    def test_a_closed_window_lists_no_tabs(self) -> None:
+        """Closing the browser window left no pages, and the tab list fell
+        back to the closed active page: the session never looked closed."""
+        page = FakePage()
+        session = self._session(page)
+        session.context.pages = []
+        page.closed = True
+
+        self.assertEqual(BrowserTabService.pages(None, session), [])  # type: ignore[arg-type]
+
+        page.closed = False
+        self.assertEqual(BrowserTabService.pages(None, session), [page])  # type: ignore[arg-type]
 
 
 if __name__ == "__main__":

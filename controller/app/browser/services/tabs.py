@@ -124,6 +124,11 @@ class BrowserTabService:
             pages = pages()
         if isinstance(pages, list) and pages:
             return pages
+        # Once the user closes the browser window there are no pages; the
+        # closed one the session still points at is not a tab.
+        is_closed = getattr(session.page, "is_closed", None)
+        if callable(is_closed) and is_closed():
+            return []
         return [session.page]
 
     async def summaries(self, session: "BrowserSession") -> list[dict[str, Any]]:
